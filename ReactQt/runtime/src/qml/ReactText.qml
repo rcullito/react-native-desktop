@@ -152,6 +152,16 @@ TextEdit {
         return result.replace(/\n/g, '<br>');
     }
 
+    function getElidedText(textEdit) {
+        textMetrics.font.family = textEdit.p_fontFamily
+        textMetrics.font.bold = textEdit.p_fontWeight == "bold"
+        textMetrics.font.italic = textEdit.p_fontStyle == "italic"
+        textMetrics.text = textEdit.p_text
+        textMetrics.elideWidth = textMetrics.width + 20
+        
+        console.log('### text: ' + textEdit.p_text + ' elided: ' + textMetrics.elidedText + ' width: ' + textMetrics.width)
+        return textMetrics.elidedText
+    }
 
     function updateHtmlText() {
         var htmlString = "";
@@ -163,7 +173,7 @@ TextEdit {
                 htmlString += child.decoratedText
             }
             else if(isRawText(child) && child.p_text) {
-                htmlString += textToHtml(child.p_text)
+                htmlString += textToHtml(getElidedText(child))
             }
         }
         decoratedText = htmlString;
@@ -186,5 +196,12 @@ TextEdit {
             return true
         else
             return false
+    }
+
+    TextMetrics {
+        id: textMetrics
+ 
+        elide: Text.ElideRight
+        elideWidth: textRoot.width - 10
     }
 }
