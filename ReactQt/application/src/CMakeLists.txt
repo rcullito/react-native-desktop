@@ -17,6 +17,7 @@ find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5WebSockets REQUIRED)
 find_package(Qt5Svg REQUIRED)
+find_package(Qt5WebEngine REQUIRED)
 
 if (USE_QTWEBKIT)
   find_package(Qt5WebKit REQUIRED)
@@ -67,7 +68,7 @@ add_executable(
   main.qrc
 )
 
-set(USED_QT_MODULES Core Qml Quick WebSockets Svg Concurrent)
+set(USED_QT_MODULES Core Qml Quick WebSockets Svg Concurrent WebEngine WebEngineWidgets)
 if (USE_QTWEBKIT)
   set (USED_QT_MODULES ${USED_QT_MODULES} Webkit)
 endif()

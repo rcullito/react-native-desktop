@@ -15,6 +15,12 @@
 #include <QJsonDocument>
 #include <QSharedPointer>
 
+#include <QWebEngineView>
+#include <QWebEngineProfile>
+#include <QWebEnginePage>
+#include <QWebEngineScript>
+#include <QWebEngineScriptCollection>
+
 class ExecutorPrivate : public QObject {
 public:
     ExecutorPrivate(Executor* e) : QObject(e), q_ptr(e) {}
@@ -41,6 +47,20 @@ public:
     Executor* q_ptr = nullptr;
 };
 
+class CustomWebPage : public QWebEnginePage {
+public:
+    CustomWebPage(QObject* parent) : QWebEnginePage(parent) {}
+
+protected:
+    void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID) override {
+        qDebug() << "New message received: " << message;
+    }
+
+};
+
+static QWebEngineView *webEngine = nullptr;
+static CustomWebPage *myPage = nullptr;
+
 Executor::Executor(ServerConnection* conn, QObject* parent) : IExecutor(parent), d_ptr(new ExecutorPrivate(this)) {
     Q_ASSERT(conn);
     Q_D(Executor);
@@ -48,6 +68,10 @@ Executor::Executor(ServerConnection* conn, QObject* parent) : IExecutor(parent),
     connect(d->connection(), &ServerConnection::dataReady, d, &ExecutorPrivate::readReply);
 
     qRegisterMetaType<Executor::ExecuteCallback>();
+
+    webEngine = new QWebEngineView();
+    myPage = new CustomWebPage(webEngine);
+    webEngine->setPage(myPage);
 }
 
 Executor::~Executor() {
@@ -76,11 +100,40 @@ void ExecutorPrivate::setupStateMachine() {
 
 void Executor::injectJson(const QString& name, const QVariant& data) {
     QJsonDocument doc = QJsonDocument::fromVariant(data);
-    d_ptr->processRequest(name.toLocal8Bit() + "=" + doc.toJson(QJsonDocument::Compact) + ";");
+    //d_ptr->processRequest(name.toLocal8Bit() + "=" + doc.toJson(QJsonDocument::Compact) + ";");
+
+    myPage->runJavaScript(name.toLocal8Bit() + "=" + doc.toJson(QJsonDocument::Compact) + ";", [](const QVariant &v) {
+        qDebug() << "Result of runJavaScript: ";
+        if (v.isValid()) {
+            qDebug() << v;
+        }
+    });
 }
 
 void Executor::executeApplicationScript(const QByteArray& script, const QUrl& /*sourceUrl*/) {
-    d_ptr->processRequest(script, [=](const QJsonDocument&) { Q_EMIT applicationScriptDone(); });
+    //d_ptr->processRequest(script, [=](const QJsonDocument&) { Q_EMIT applicationScriptDone(); });
+
+    //webEngine = new QWebEngineView();
+    // QWebEngineProfile *profile = new QWebEngineProfile("MyWebChannelProfile", webEngine);
+
+    /*QWebEngineScript script2;
+    script2.setSourceCode(script);
+    script2.setName("reactnativeapp.js");
+    script2.setWorldId(QWebEngineScript::MainWorld);
+    script2.setInjectionPoint(QWebEngineScript::DocumentCreation);
+    script2.setRunsOnSubFrames(true);
+    profile->scripts()->insert(script2);*/
+
+    //myPage = new QWebEnginePage(webEngine);
+    //webEngine->setPage(myPage);
+    myPage->runJavaScript("console.log(\"Test msg!!!!\");");
+    myPage->runJavaScript(script, [=](const QVariant &v) {
+        qDebug() << "Result of runJavaScript:";
+        if (v.isValid()) {
+            qDebug() << v;
+        }
+        Q_EMIT applicationScriptDone();
+    });
 }
 
 void Executor::executeJSCall(const QString& method,
@@ -97,8 +150,21 @@ void Executor::executeJSCall(const QString& method,
         }
     }
 
-    d_ptr->processRequest(
-        QByteArray("__fbBatchedBridge.") + method.toLocal8Bit() + "(" + stringifiedArgs.join(',') + ");", callback);
+    //d_ptr->processRequest(
+        //QByteArray("__fbBatchedBridge.") + method.toLocal8Bit() + "(" + stringifiedArgs.join(',') + ");", callback);
+
+    myPage->runJavaScript(QByteArray("__fbBatchedBridge.") + method.toLocal8Bit() + "(" + stringifiedArgs.join(',') + ");", [=](const QVariant &v) {
+        qDebug() << "Result of runJavaScript: ";
+        if (v.isValid()) {
+            qDebug() << v;
+        }
+
+        QJsonDocument doc;
+        if (v != "undefined") {
+            doc = QJsonDocument::fromVariant(v);
+        }
+        callback(doc);
+    });
 }
 
 ServerConnection* ExecutorPrivate::connection() {

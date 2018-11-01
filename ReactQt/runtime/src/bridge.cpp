@@ -470,7 +470,7 @@ void Bridge::sourcesFinished() {
     QTimer::singleShot(0, [=] {
         QMetaObject::invokeMethod(d->executor,
                                   "executeApplicationScript",
-                                  Qt::AutoConnection,
+                                  Qt::DirectConnection,
                                   Q_ARG(QByteArray, d->sourceCode->sourceCode()),
                                   Q_ARG(QUrl, d->bundleUrl));
         if (d_func()->hotReload) {
@@ -482,7 +482,7 @@ void Bridge::sourcesFinished() {
                                                           d->sourceCode->scriptUrl().port(0)}};
             QMetaObject::invokeMethod(d_func()->executor,
                                       "executeJSCall",
-                                      Qt::AutoConnection,
+                                      Qt::DirectConnection,
                                       Q_ARG(const QString&, "callFunctionReturnFlushedQueue"),
                                       Q_ARG(const QVariantList&, args),
                                       Q_ARG(const Executor::ExecuteCallback&, [=](const QJsonDocument& doc) {
@@ -589,7 +589,7 @@ void Bridge::injectModules() {
     QVariant remoteConfig = QVariantMap{{"remoteModuleConfig", moduleConfig}};
     QMetaObject::invokeMethod(d_func()->executor,
                               "injectJson",
-                              Qt::AutoConnection,
+                              Qt::DirectConnection,
                               Q_ARG(const QString&, "__fbBatchedBridgeConfig"),
                               Q_ARG(const QVariant&, remoteConfig));
 }
@@ -616,7 +616,7 @@ void Bridge::processResult(const QJsonDocument& doc) {
     for (int i = 0; i < moduleIDs.size(); ++i) {
         QMetaObject::invokeMethod(this,
                                   "invokeModuleMethod",
-                                  Qt::AutoConnection,
+                                  Qt::DirectConnection,
                                   Q_ARG(int, moduleIDs[i].toInt()),
                                   Q_ARG(int, methodIDs[i].toInt()),
                                   Q_ARG(QList<QVariant>, paramArrays[i].toList()));

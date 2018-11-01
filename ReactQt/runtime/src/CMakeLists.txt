@@ -21,6 +21,8 @@ find_package(Qt5Qml REQUIRED)
 find_package(Qt5Quick REQUIRED)
 find_package(Qt5WebSockets REQUIRED)
 find_package(Qt5Svg REQUIRED)
+find_package(Qt5WebEngine REQUIRED)
+find_package(Qt5WebEngineWidgets REQUIRED)
 
 if (USE_QTWEBKIT)
   find_package(Qt5WebKit REQUIRED)
@@ -250,7 +252,7 @@ endif()
 
 include_directories(${REACT_NATIVE_DESKTOP_EXTERNAL_MODULES_INCLUDE_DIRS})
 
-set(USED_QT_MODULES Core Qml Quick WebSockets Svg Concurrent)
+set(USED_QT_MODULES Core Qml Quick WebSockets Svg Concurrent WebEngine WebEngineWidgets)
 if (USE_QTWEBKIT)
   set (USED_QT_MODULES ${USED_QT_MODULES} Webkit)
 endif()

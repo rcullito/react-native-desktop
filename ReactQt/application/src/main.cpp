@@ -11,9 +11,11 @@
 #include <QCommandLineParser>
 #include <QDirIterator>
 #include <QFontDatabase>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQuickView>
 #include <QUrl>
+
+#include <qtwebengineglobal.h>
 
 #include "attachedproperties.h"
 #include "reactitem.h"
@@ -131,11 +133,13 @@ void loadFontsFromResources() {
 }
 
 int main(int argc, char** argv) {
-    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication app(argc, argv);
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication app(argc, argv);
     Q_INIT_RESOURCE(react_resources);
 
     loadFontsFromResources();
+
+    QtWebEngine::initialize();
 
     QQuickView view;
     ReactNativeProperties* rnp = new ReactNativeProperties(&view);
